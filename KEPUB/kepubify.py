@@ -46,8 +46,9 @@ class Kepubify():
 	def __add_kobo_spans_to_node(self, node):
 		# process node only if it is not a comment or a processing instruction
 		if not (node is None or isinstance(node, etree._Comment) or isinstance(
-				node, etree._ProcessingInstruction)):
+				node, etree._ProcessingInstruction) or isinstance(node, etree._Entity)):
 			# Special case: <img> tags
+
 			special_tag_match = re.search(r'^(?:\{[^\}]+\})?(\w+)$', node.tag)
 			if special_tag_match and special_tag_match.group(
 					1) in SPECIAL_TAGS:
@@ -102,7 +103,7 @@ class Kepubify():
 
 	def add_kobo_spans(self, content):
 		parser = etree.XMLParser(resolve_entities=False, encoding='utf-8')
-		root = etree.fromstring(content.encode('utf-8'), parser=parser)
+		root = etree.fromstring(content.encode('utf-8'), parser=parser).getroottree()
 
 		self.paragraph_counter = 1
 		self.segment_counter = 1
@@ -110,7 +111,7 @@ class Kepubify():
 			body = root.xpath('./xhtml:body', namespaces={'xhtml': XHTML_NAMESPACE})[0]
 			body = self.__add_kobo_spans_to_node(body)
 
-		root = etree.tostring(root, pretty_print=True, xml_declaration=True, encoding = 'utf-8', doctype = "<!DOCTYPE html>")
+		root = etree.tostring(root, pretty_print=True, xml_declaration=True, encoding = 'utf-8')
 		# Re-open self-closing paragraph tags
 		root = re.sub(b'<p[^>/]*/>', '<p></p>', root).decode('utf-8')
 
